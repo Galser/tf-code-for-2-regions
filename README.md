@@ -1,5 +1,5 @@
 # tf-code-for-2-regions
-Sample repo - code that create resource in 2 regions
+Sample repo - code that create resource in 2 regions and so they can ping each other via private IPs
 
 # 1. Create code
 
@@ -11,17 +11,10 @@ Create code :
 # TODO
 
 - [ ] - initial code
-- [ ] test
+- [ ] test doormat
+- [ ] add EC2 module
+- [ ] add tests
 - [ ] README update
-- [ ] 
-# ptfe-prod-ext
-TFE v4 - Install Prod External Services version with Valid Certificate - AWS
-
-Based on: https://github.com/Galser/ptfe-prodmount-vc-cloud-backuprestore
-
-# Purpose
-
-This repo contains all the code and instructions on how to install a TFE (Prod) version 4 with a Valid Certificate in an AWS cloud environment in external services mode. 
 
 # Requirements
 
