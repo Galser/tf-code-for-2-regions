@@ -31,7 +31,7 @@ data "aws_ami" "ubuntu-18_04-region1" {
 
 # Deploy ec2 in 2-nd region
 data "aws_ami" "ubuntu-18_04-region2" {
-  provider aws.region2
+  provider = aws.region2
   most_recent = true
   owners = ["${var.ubuntu_account_number}"]
 
