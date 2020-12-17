@@ -11,7 +11,7 @@ variable "name" {
 resource "aws_key_pair" "sshkey" {
   key_name = var.name
   #   public_key = "${file("~/.ssh/id_rsa.pub")}"
-  public_key = "${file("${var.key_path}")}"
+  public_key = file(var.key_path)
 }
 
 output "key_id" {
