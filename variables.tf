@@ -3,7 +3,7 @@ variable "region1" {
 }
 
 variable "region2" {
-	default = "eu-west-2"
+	default = "eu-west-3"
 }
 
 

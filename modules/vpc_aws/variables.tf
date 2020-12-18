@@ -16,10 +16,10 @@ variable "dnsHostNames" {
   default = true
 }
 variable "vpcCIDRblock" {
-  default = "10.0.0.0/16"
+  default = ""
 }
 variable "subnetCIDRblock" {
-  default = "10.0.1.0/24"
+  default = "10.0.0.0/16"
 }
 variable "destinationCIDRblock" {
   default = "0.0.0.0/0"
