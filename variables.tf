@@ -7,6 +7,22 @@ variable "region2" {
 }
 
 
+variable "region1_vpcCIDRblock" {
+  default = "10.1.0.0/16"
+}
+
+variable "region1_subnetCIDRblock" {  
+  default = "10.1.0.0/24"
+}
+
+variable "region2_vpcCIDRblock" {
+   default = "172.16.0.0/16"
+}
+
+variable "region2_subnetCIDRblock" {
+  default = "172.16.1.0/24" 
+}
+
 variable "ubuntu_account_number" {
   default = "099720109477"
 }

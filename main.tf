@@ -1,12 +1,8 @@
-# The default provider configuration; resources that begin with `aws_` will use
-# it as the default, and it can be referenced as `aws`.
 provider "aws" {
   alias  = "region1"
   region = var.region1
 }
 
-# Additional provider configuration for west coast region; resources can
-# reference this as `aws.west`.
 provider "aws" {
   alias  = "region2"
   region = var.region2
@@ -23,7 +19,6 @@ data "aws_ami" "ubuntu-18_04-region1" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
   }
 }
-
 
 # Get the AMI in region 2
 data "aws_ami" "ubuntu-18_04-region2" {
@@ -56,14 +51,14 @@ module "vpc_aws_region1" {
     aws = aws.region1
   }
 
-  vpcCIDRblock = "10.1.0.0/16"
-  subnetCIDRblock = "10.1.0.0/24"
+  vpcCIDRblock = var.region1_vpcCIDRblock
+  subnetCIDRblock = var.region1_subnetCIDRblock
 
   tag = var.tag
 }
 
 # Instance : AWS EC2 , instance 1
-/* module "compute_aws_region1" {
+module "compute_aws_region1" {
   source = "./modules/compute_aws"
   providers = {
     aws = aws.region1
@@ -76,7 +71,7 @@ module "vpc_aws_region1" {
   subnet_id       = module.vpc_aws_region1.subnet_id
   key_name        = module.sshkey_aws_region1.key_id
   key_path        = "~/.ssh/id_rsa"
-} */
+}
 
 ## REGION 2
 
@@ -97,15 +92,14 @@ module "vpc_aws_region2" {
     aws = aws.region2
   }
 
-  #vpcCIDRblock = "10.2.0.0/16"
-  vpcCIDRblock = "172.16.0.0/16"
-  subnetCIDRblock = "172.16.1.0/24"
+  vpcCIDRblock = var.region2_vpcCIDRblock
+  subnetCIDRblock = var.region2_subnetCIDRblock
 
   tag = var.tag
 }
 
 # Instance : AWS EC2 , instance 1
-/* module "compute_aws_region2" {
+module "compute_aws_region2" {
   source = "./modules/compute_aws"
   providers = {
     aws = aws.region2
@@ -119,8 +113,6 @@ module "vpc_aws_region2" {
   key_name        = module.sshkey_aws_region2.key_id
   key_path        = "~/.ssh/id_rsa"
 }
-*/
-
 
 # Create peering
 data "aws_caller_identity" "peer" {
@@ -141,6 +133,10 @@ resource "aws_vpc_peering_connection" "peer" {
   tags = {
     Side = "Requester"
   }
+
+  requester {
+    allow_remote_vpc_dns_resolution = true
+  }  
 }
 
 # Accepter's side of the connection.
@@ -149,9 +145,30 @@ resource "aws_vpc_peering_connection_accepter" "peer" {
   vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
   auto_accept               = true
 
+  accepter {
+    allow_remote_vpc_dns_resolution = true
+  }
+
   tags = {
     Side = "Accepter"
   }
 }    
+
+# Adding peering routes 
+resource "aws_route" "region1to2" {
+  provider                  = aws.region1
+  route_table_id            = module.vpc_aws_region1.route_table_id
+  destination_cidr_block    = var.region2_vpcCIDRblock
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
+}
+
+resource "aws_route" "region2to1" {
+  provider                  = aws.region2  
+  route_table_id            = module.vpc_aws_region2.route_table_id
+  destination_cidr_block    = var.region1_vpcCIDRblock
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
+}
+
+
 
 # Provision Test 1 
