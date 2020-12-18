@@ -14,9 +14,9 @@ provider "aws" {
 
 # Get the AMI in region 1
 data "aws_ami" "ubuntu-18_04-region1" {
-  provider = aws.region1
+  provider    = aws.region1
   most_recent = true
-  owners = [var.ubuntu_account_number]
+  owners      = [var.ubuntu_account_number]
 
   filter {
     name   = "name"
@@ -27,9 +27,9 @@ data "aws_ami" "ubuntu-18_04-region1" {
 
 # Get the AMI in region 2
 data "aws_ami" "ubuntu-18_04-region2" {
-  provider = aws.region2
+  provider    = aws.region2
   most_recent = true
-  owners = [var.ubuntu_account_number]
+  owners      = [var.ubuntu_account_number]
 
   filter {
     name   = "name"
@@ -41,7 +41,7 @@ data "aws_ami" "ubuntu-18_04-region2" {
 
 # SSH Key : region 1
 module "sshkey_aws_region1" {
-  source   = "./modules/sshkey_aws"
+  source = "./modules/sshkey_aws"
   providers = {
     aws = aws.region1
   }
@@ -57,13 +57,13 @@ module "vpc_aws_region1" {
   }
 
   vpcCIDRblock = "10.1.0.0/16"
-  subnetCIDRblock = "10.1.1.0/24"
+  subnetCIDRblock = "10.1.0.0/24"
 
-  tag              = var.tag
+  tag = var.tag
 }
 
 # Instance : AWS EC2 , instance 1
-module "compute_aws_region1" {
+/* module "compute_aws_region1" {
   source = "./modules/compute_aws"
   providers = {
     aws = aws.region1
@@ -76,13 +76,13 @@ module "compute_aws_region1" {
   subnet_id       = module.vpc_aws_region1.subnet_id
   key_name        = module.sshkey_aws_region1.key_id
   key_path        = "~/.ssh/id_rsa"
-}
+} */
 
 ## REGION 2
 
 # SSH Key : region 2
 module "sshkey_aws_region2" {
-  source   = "./modules/sshkey_aws"
+  source = "./modules/sshkey_aws"
   providers = {
     aws = aws.region2
   }
@@ -97,14 +97,15 @@ module "vpc_aws_region2" {
     aws = aws.region2
   }
 
-  vpcCIDRblock = "10.1.0.0/16"
-  subnetCIDRblock = "10.1.1.0/24"
+  #vpcCIDRblock = "10.2.0.0/16"
+  vpcCIDRblock = "172.16.0.0/16"
+  subnetCIDRblock = "172.16.1.0/24"
 
-  tag              = var.tag
+  tag = var.tag
 }
 
 # Instance : AWS EC2 , instance 1
-module "compute_aws_region2" {
+/* module "compute_aws_region2" {
   source = "./modules/compute_aws"
   providers = {
     aws = aws.region2
@@ -118,15 +119,39 @@ module "compute_aws_region2" {
   key_name        = module.sshkey_aws_region2.key_id
   key_path        = "~/.ssh/id_rsa"
 }
+*/
 
 
-# Provision Test 1 
-
-# Peering
-resource "aws_vpc_peering_connection" "test" {
+# Create peering
+data "aws_caller_identity" "peer" {
   provider = aws.region1
-  peer_vpc_id   = module.vpc_aws_region1.id
-  vpc_id        = module.vpc_aws_region2.id
 }
 
 
+# Requester's side of the connection.
+resource "aws_vpc_peering_connection" "peer" {
+  provider      = aws.region1
+  vpc_id        = module.vpc_aws_region1.id
+  peer_vpc_id   = module.vpc_aws_region2.id
+  peer_owner_id = data.aws_caller_identity.peer.account_id
+  peer_region   = var.region2  # !!! in current version of AWS inter-region peering
+                               # not gonna owrk unless you speciyfing region here
+  auto_accept   = false
+
+  tags = {
+    Side = "Requester"
+  }
+}
+
+# Accepter's side of the connection.
+resource "aws_vpc_peering_connection_accepter" "peer" {
+  provider                  = aws.region2
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
+  auto_accept               = true
+
+  tags = {
+    Side = "Accepter"
+  }
+}    
+
+# Provision Test 1 

@@ -7,6 +7,8 @@ resource "aws_vpc" "ag_test" {
   tags = {
     Name = var.tag
   }
+  enable_dns_support   = true
+  enable_dns_hostnames = true  
 } # end resource
 
 # create the main Subnet
