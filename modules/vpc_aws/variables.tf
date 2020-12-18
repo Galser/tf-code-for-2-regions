@@ -2,8 +2,6 @@
 # you MNEED to specify at least
 # region and availabilityZone
 
-variable "region" {}
-variable "availabilityZone" {}
 variable "tag" {}
 
 variable "instanceTenancy" {
@@ -27,7 +25,7 @@ variable "destinationCIDRblock" {
   default = "0.0.0.0/0"
 }
 variable "ingressCIDRblock" {
-  type    = "list"
+  type    = list
   default = ["0.0.0.0/0"]
 }
 variable "mapPublicIP" {

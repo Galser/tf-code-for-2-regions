@@ -23,23 +23,13 @@ resource "aws_instance" "ec2" {
     user = "ubuntu"
     type = "ssh"
     #     private_key = "${file("~/.ssh/id_rsa")}"
-    private_key = "${file("${var.key_path}")}"
+    private_key = file(var.key_path)
     host        = self.public_ip
   }
 
-  provisioner "remote-exec" {
+  /* provisioner "remote-exec" {
     script = "${path.module}/scripts/provision.sh"
   }
-
-  provisioner "file" {
-    source      = "${path.module}/scripts/mount-ebs.sh"
-    destination = "/tmp/mount-ebs.sh"
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/scripts/delete_all.sh"
-    destination = "/tmp/delete_all.sh"
-  }
-
+ */
 }
 
