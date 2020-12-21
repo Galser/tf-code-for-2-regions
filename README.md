@@ -55,7 +55,7 @@ variable "region2" {
 
 The tests themself - should be executed after both instances are up and we have routes in place and peering is up. And Terraform - either local CLI version or in the Terraform Cloud can execute deployment of infrastructure elements in parallel. That's why we have a test resource described like this : 
 
-```Terrafrom
+```Terraform
 # instance 1 
 resource "null_resource" "test-region1" {
   triggers = {
