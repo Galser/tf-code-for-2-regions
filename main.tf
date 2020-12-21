@@ -166,4 +166,76 @@ resource "aws_route" "region2to1" {
   vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
 }
 
-# Provision Test 1 
+# Run tests
+
+# instance 1 
+resource "null_resource" "test-region1" {
+  triggers = {
+    instances_ids = join(",",[ 
+      module.compute_aws_region1.instance_id,
+      module.compute_aws_region2.instance_id
+    ])
+  }
+
+  # explicit depends on routes and instances
+  # as we need for BOTH to be up and ready
+  # yet they can be deploy in parrallel by Terraform 
+  depends_on = [
+    aws_route.region1to2,
+    aws_route.region2to1,
+    module.compute_aws_region1,
+    module.compute_aws_region2
+  ]
+
+  connection {
+    user        = "ubuntu"
+    type        = "ssh"
+    private_key = file("~/.ssh/id_rsa")
+    host        = module.compute_aws_region1.public_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo Going to ping instance in 2-nd region via internal IP : [${module.compute_aws_region2.private_ip}]",
+      "echo My own internal ip is : [ ${module.compute_aws_region1.private_ip} ]",
+      "ping -c 4 ${module.compute_aws_region2.private_ip}",
+    ]
+  }
+
+}
+
+# instance 2
+resource "null_resource" "test-region2" {
+  triggers = {
+    instances_ids = join(",",[ 
+      module.compute_aws_region1.instance_id,
+      module.compute_aws_region2.instance_id
+    ])
+  }
+
+  # explicit depends on routes and instances
+  # as we need for BOTH to be up and ready
+  # yet they can be deploy in parrallel by Terraform 
+  depends_on = [
+    aws_route.region1to2,
+    aws_route.region2to1,
+    module.compute_aws_region1,
+    module.compute_aws_region2
+  ]
+
+  connection {
+    user        = "ubuntu"
+    type        = "ssh"
+    private_key = file("~/.ssh/id_rsa")
+    host        = module.compute_aws_region2.public_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo Going to ping instance in 2-nd region via internal IP : [${module.compute_aws_region1.private_ip}]",
+      "echo My own internal ip is : [ ${module.compute_aws_region2.private_ip} ]",
+      "ping -c 4 ${module.compute_aws_region1.private_ip}",
+    ]
+  }
+
+}
