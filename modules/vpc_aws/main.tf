@@ -25,12 +25,26 @@ resource "aws_security_group" "ag_test" {
   vpc_id      = aws_vpc.ag_test.id
   name        = "${var.tag} Security Group"
   description = "${var.tag} Security Group"
+  # SSH
   ingress {
     cidr_blocks = var.ingressCIDRblock
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
   }
+  # ALL ICMP (including ping/echo)
+  ingress {
+    from_port = 8
+    to_port = 0
+    protocol = "icmp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    cidr_blocks = var.ingressCIDRblock
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+  }  
   # allow egress ephemeral ports
   egress {
     protocol    = "tcp"
@@ -38,37 +52,58 @@ resource "aws_security_group" "ag_test" {
     from_port   = 1024
     to_port     = 65535
   }
+  # allow egress 80 // some Ubuntu libtool
+  # still coming opver HTTP, not https
+  egress {
+    protocol    = "tcp"
+    cidr_blocks = [var.destinationCIDRblock]
+    from_port   = 80
+    to_port     = 80
+  }
+  # allow egress 443
+  egress {
+    protocol    = "tcp"
+    cidr_blocks = [var.destinationCIDRblock]
+    from_port   = 443
+    to_port     = 443
+  }  
+  # allow egress ICMP
+  egress {
+    protocol    = "icmp"
+    cidr_blocks = [var.destinationCIDRblock]
+    from_port   = -1
+    to_port     = -1
+  }  
   tags = {
     Name = "${var.tag}_security_group"
   }
 } # end resource
 
 # Create the Internet Gateway
-/* resource "aws_internet_gateway" "ag_tfe_GW" {
-  vpc_id = "${aws_vpc.ag_tfe.id}"
+resource "aws_internet_gateway" "ag_test" {
+  vpc_id = aws_vpc.ag_test.id
   tags = {
     Name = "${var.tag}_internet_gateway"
   }
 } # end resource
 
 # Create the Route Table
-resource "aws_route_table" "ag_tfe_route_table" {
-  vpc_id = "${aws_vpc.ag_tfe.id}"
+resource "aws_route_table" "ag_test_route_table" {
+  vpc_id = aws_vpc.ag_test.id
   tags = {
     Name = "${var.tag}_route_table"
   }
 } # end resource
 
 # Create the Internet Access
-resource "aws_route" "ag_tfe_internet_access" {
-  route_table_id         = "${aws_route_table.ag_tfe_route_table.id}"
-  destination_cidr_block = "${var.destinationCIDRblock}"
-  gateway_id             = "${aws_internet_gateway.ag_tfe_GW.id}"
+resource "aws_route" "ag_test_internet_access" {
+  route_table_id         = aws_route_table.ag_test_route_table.id
+  destination_cidr_block = var.destinationCIDRblock
+  gateway_id             = aws_internet_gateway.ag_test.id
 } # end resource
 
 # Associate the Route Table with the Subnet
-resource "aws_route_table_association" "ag_tfe_association" {
-  subnet_id      = "${aws_subnet.ag_tfe_Subnet.id}"
-  route_table_id = "${aws_route_table.ag_tfe_route_table.id}"
+resource "aws_route_table_association" "ag_test_association" {
+  subnet_id      = aws_subnet.ag_test.id
+  route_table_id = aws_route_table.ag_test_route_table.id
 } # end resource
-*/

@@ -4,6 +4,7 @@ resource "aws_instance" "ec2" {
   subnet_id              = var.subnet_id
   vpc_security_group_ids = var.security_groups
   key_name               = var.key_name
+  associate_public_ip_address = true
 
   root_block_device {
     volume_size = 50

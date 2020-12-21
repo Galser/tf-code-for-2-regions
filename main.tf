@@ -1,12 +1,10 @@
-# The default provider configuration; resources that begin with `aws_` will use
-# it as the default, and it can be referenced as `aws`.
+# We dfein out 2 AWS provider aliases
+# to emphasize different regions 
 provider "aws" {
   alias  = "region1"
   region = var.region1
 }
 
-# Additional provider configuration for west coast region; resources can
-# reference this as `aws.west`.
 provider "aws" {
   alias  = "region2"
   region = var.region2
@@ -23,7 +21,6 @@ data "aws_ami" "ubuntu-18_04-region1" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
   }
 }
-
 
 # Get the AMI in region 2
 data "aws_ami" "ubuntu-18_04-region2" {
@@ -46,7 +43,7 @@ module "sshkey_aws_region1" {
     aws = aws.region1
   }
   name     = "${var.testname}-region1"
-  key_path = "~/.ssh/id_rsa.pub"
+  key_path = var.ssh_key_path
 }
 
 # Network : AWS VPC , region 1
@@ -56,14 +53,14 @@ module "vpc_aws_region1" {
     aws = aws.region1
   }
 
-  vpcCIDRblock = "10.1.0.0/16"
-  subnetCIDRblock = "10.1.0.0/24"
+  vpcCIDRblock = var.region1_vpcCIDRblock
+  subnetCIDRblock = var.region1_subnetCIDRblock
 
   tag = var.tag
 }
 
-# Instance : AWS EC2 , instance 1
-/* module "compute_aws_region1" {
+# Instance : AWS EC2 , instance in region 1
+module "compute_aws_region1" {
   source = "./modules/compute_aws"
   providers = {
     aws = aws.region1
@@ -75,8 +72,8 @@ module "vpc_aws_region1" {
   security_groups = [module.vpc_aws_region1.security_group_id]
   subnet_id       = module.vpc_aws_region1.subnet_id
   key_name        = module.sshkey_aws_region1.key_id
-  key_path        = "~/.ssh/id_rsa"
-} */
+  key_path        = var.ssh_key_path
+}
 
 ## REGION 2
 
@@ -87,25 +84,24 @@ module "sshkey_aws_region2" {
     aws = aws.region2
   }
   name     = "${var.testname}-region2"
-  key_path = "~/.ssh/id_rsa.pub"
+  key_path = var.ssh_key_path
 }
 
-# Network : AWS VPC , region 1
+# Network : AWS VPC , region 2
 module "vpc_aws_region2" {
   source = "./modules/vpc_aws"
   providers = {
     aws = aws.region2
   }
 
-  #vpcCIDRblock = "10.2.0.0/16"
-  vpcCIDRblock = "172.16.0.0/16"
-  subnetCIDRblock = "172.16.1.0/24"
+  vpcCIDRblock = var.region2_vpcCIDRblock
+  subnetCIDRblock = var.region2_subnetCIDRblock
 
   tag = var.tag
 }
 
-# Instance : AWS EC2 , instance 1
-/* module "compute_aws_region2" {
+# Instance : AWS EC2 , instance in region 2
+module "compute_aws_region2" {
   source = "./modules/compute_aws"
   providers = {
     aws = aws.region2
@@ -117,9 +113,8 @@ module "vpc_aws_region2" {
   security_groups = [module.vpc_aws_region2.security_group_id]
   subnet_id       = module.vpc_aws_region2.subnet_id
   key_name        = module.sshkey_aws_region2.key_id
-  key_path        = "~/.ssh/id_rsa"
+  key_path        = var.ssh_key_path
 }
-*/
 
 
 # Create peering
@@ -135,12 +130,14 @@ resource "aws_vpc_peering_connection" "peer" {
   peer_vpc_id   = module.vpc_aws_region2.id
   peer_owner_id = data.aws_caller_identity.peer.account_id
   peer_region   = var.region2  # !!! in current version of AWS inter-region peering
-                               # not gonna owrk unless you speciyfing region here
-  auto_accept   = false
+                               # not gonna work unless you speciyfing region here
+  auto_accept   = false        # This cannot be `true` when we specifying region above
+                               # otherwise - fail 
 
   tags = {
     Side = "Requester"
   }
+
 }
 
 # Accepter's side of the connection.
@@ -153,5 +150,20 @@ resource "aws_vpc_peering_connection_accepter" "peer" {
     Side = "Accepter"
   }
 }    
+
+# Explictly adding peering routes 
+resource "aws_route" "region1to2" {
+  provider                  = aws.region1
+  route_table_id            = module.vpc_aws_region1.route_table_id
+  destination_cidr_block    = var.region2_vpcCIDRblock
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
+}
+
+resource "aws_route" "region2to1" {
+  provider                  = aws.region2  
+  route_table_id            = module.vpc_aws_region2.route_table_id
+  destination_cidr_block    = var.region1_vpcCIDRblock
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
+}
 
 # Provision Test 1 
