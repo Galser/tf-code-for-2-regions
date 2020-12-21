@@ -32,14 +32,15 @@ It also utilizes modules from the subfolder `module` in the repository root.
 The idea behind the test is that we are going : 
 
 - To create 2 VPCs in each different region of AWS cloud and join them with peering to be able to ping each other using strictly only internal IP addresses
-- In every VPC we need to create non-overlapping subnetworks (*that's the requirement of peering*)
+- In each VPC we need to create non-overlapping subnetworks (*that's the requirement of peering*)
 - We need also to create a proper routing for our networks in every VPC, as VPC peering only does that - peering, and without adequate routes - EC2 instance will not know where to send packets, and they will go to the default GW
+- There should be also security groups that allow incoming and outgoing ICMP traffic for ping 'request/echo` packets, and for incoming SSH
 - And yes, we also need some default GW , in our case - to reach Internet (*so it's going to be IGW*) , or simply put for some manual tests via ssh over `public IP`.
-- The very same public IP going to be used to execut automated 4-times ping of instances at the end after the full deploy,
+- The very same public IP going to be used to execute automated 4-times ping of instances at the end after the full deploy,
 
 All code is already implemented, what you may want to tweak is some region settings at the beginning of the file [variables.tf](variables.tf) : 
 
-```Terrafrom
+```Terraform
 variable "region1" {
   default = "eu-west-1"
 }
@@ -48,15 +49,6 @@ variable "region2" {
   default = "eu-west-3"
 }
 ...
-```
-
-And, perhaps the path to your SSH key file at the very end of the same [variables.tf](variables.tf) : 
-
-```Terraform
-...
-variable "ssh_key_path" {
-  default = "~/.ssh/id_rsa.pub"
-}
 ```
 
 ## Notes on dependencies 
@@ -105,7 +97,7 @@ with explicit `depends_on` block.
 
 # 2. Deploy infrastructure and run test
 
-- Init Terrafrom, execute `terrafrom init`
+- Init Terrafrom, by executing `terrafrom init`
 - Run apply : execute `terrafrom apply`
 - Observe the tests near the end of the execution : 
 
@@ -157,7 +149,7 @@ and it is successful :
  4 packets transmitted, 4 received, 0% packet loss, time 3006ms
 ```
 
-Same vice-versa. 
+Same vice-versa.  You can full run logs for eveyr stage below, via links in the next section
 
 # Run logs
 
@@ -167,8 +159,8 @@ Same vice-versa.
 
 # Notes
 
-1. Our Doormat having problems with EU-South region
-2. Do not forget to open outgoing ICMP!!! Almost 1 hour lost
+1. Our Doormat having problems with EU-South-1 region
+2. Do not forget to open outgoing ICMP!!! Almost 1 hour lost at first. 
 
 # Technologies
 
@@ -187,4 +179,4 @@ Same vice-versa.
 - [x] test doormat
 - [x] add EC2 module
 - [x] add tests
-- [ ] README update
+- [x] README update
