@@ -6,6 +6,7 @@ variable "region2" {
 	default = "eu-west-3"
 }
 
+# Below are sane defaults
 
 variable "region1_vpcCIDRblock" {
   default = "10.1.0.0/16"
@@ -37,4 +38,8 @@ variable "tag" {
 
 variable "instance_type" {
   default = "t2.micro"
+}
+
+variable "ssh_key_path" {
+  default = "~/.ssh/id_rsa.pub"
 }

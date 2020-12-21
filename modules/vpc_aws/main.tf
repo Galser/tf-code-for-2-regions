@@ -56,16 +56,23 @@ resource "aws_security_group" "ag_test" {
   # still coming opver HTTP, not https
   egress {
     protocol    = "tcp"
-    cidr_blocks = ["${var.destinationCIDRblock}"]
+    cidr_blocks = [var.destinationCIDRblock]
     from_port   = 80
     to_port     = 80
   }
   # allow egress 443
   egress {
     protocol    = "tcp"
-    cidr_blocks = ["${var.destinationCIDRblock}"]
+    cidr_blocks = [var.destinationCIDRblock]
     from_port   = 443
     to_port     = 443
+  }  
+  # allow egress ICMP
+  egress {
+    protocol    = "icmp"
+    cidr_blocks = [var.destinationCIDRblock]
+    from_port   = -1
+    to_port     = -1
   }  
   tags = {
     Name = "${var.tag}_security_group"

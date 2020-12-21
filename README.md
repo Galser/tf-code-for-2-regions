@@ -55,6 +55,10 @@ To learn more about the mentioned above tools and technologies - please check se
 - terraform apply : [terraform_apply.md](terraform_apply.md)
 - terraform destroy  : [terraform_destroy.md](terraform_destroy.md)
 
+# Notes
+
+1. Our Doormat having problems with EU-South region
+2. Do not forget to open outgoing ICMP!!! Almost 1 hour lost
 
 # Technologies
 
