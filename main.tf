@@ -232,7 +232,7 @@ resource "null_resource" "test-region2" {
 
   provisioner "remote-exec" {
     inline = [
-      "echo Going to ping instance in 2-nd region via internal IP : [${module.compute_aws_region1.private_ip}]",
+      "echo Going to ping instance in 1-st region via internal IP : [${module.compute_aws_region1.private_ip}]",
       "echo My own internal ip is : [ ${module.compute_aws_region2.private_ip} ]",
       "ping -c 4 ${module.compute_aws_region1.private_ip}",
     ]

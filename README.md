@@ -149,7 +149,7 @@ and it is successful :
  4 packets transmitted, 4 received, 0% packet loss, time 3006ms
 ```
 
-Same vice-versa.  You can full run logs for eveyr stage below, via links in the next section
+Same vice-versa.  You can check full run logs for every stage below, via links in the next section
 
 # Run logs
 
@@ -160,7 +160,34 @@ Same vice-versa.  You can full run logs for eveyr stage below, via links in the 
 # Notes
 
 1. Our Doormat having problems with EU-South-1 region
-2. Do not forget to open outgoing ICMP!!! Almost 1 hour lost at first. 
+2. Do not forget to open outgoing ICMP!!! Almost 1 hour lost at first.
+3. We can explicitly force sequenced (e.g. unparalled ) creation of instances by using new feature of TF 0.13.X branch - `depends_on` for modules, like this : 
+
+```Terraform
+  ...
+  depends_on = [module.compute_aws_region1]
+  ...
+```
+
+And then in apply it's gonna be one-by-one : 
+
+```Terraform
+...
+aws_route.region1to2: Creation complete after 6s [id=r-rtb-0e545514441308fb33246677288]
+aws_vpc_peering_connection_accepter.peer: Creation complete after 7s [id=pcx-059d885487dfc4565]
+module.compute_aws_region1.aws_instance.ec2: Still creating... [20s elapsed]
+module.compute_aws_region1.aws_instance.ec2: Still creating... [30s elapsed]
+module.compute_aws_region1.aws_instance.ec2: Creation complete after 34s [id=i-0429c35f2dc571b29]
+module.compute_aws_region2.aws_instance.ec2: Creating...
+module.compute_aws_region2.aws_instance.ec2: Still creating... [10s elapsed]
+module.compute_aws_region2.aws_instance.ec2: Still creating... [20s elapsed]
+module.compute_aws_region2.aws_instance.ec2: Creation complete after 22s [id=i-03a75191890084baf]
+null_resource.test-region2: Creating...
+...
+```
+
+Like above - creation of the instance in the 2-nd region going to start ONLY AFTER 1-st one had been completed. Though it give us no real benefit in this test.
+
 
 # Technologies
 
